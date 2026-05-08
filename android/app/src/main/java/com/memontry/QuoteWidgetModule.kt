@@ -11,8 +11,8 @@ class QuoteWidgetModule(reactContext: ReactApplicationContext) : ReactContextBas
     }
 
     @ReactMethod
-    fun updateQuote(text: String) {
+    fun updateWidget(eventName: String, daysLeft: String) {
         val context = reactApplicationContext
-        QuoteWidget.saveQuoteAndUpdateWidgets(context, text)
+        QuoteWidget.saveEventAndUpdateWidgets(context, eventName, daysLeft)
     }
 }

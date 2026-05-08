@@ -117,6 +117,9 @@ export default function AddEventScreen() {
       };
 
       await storage.addEvent(newEvent);
+      if (events.length === 0) {
+        await storage.setWidgetEventId(newEvent.id);
+      }
     } else {
       const updatedEvent = {
         id: eventId,

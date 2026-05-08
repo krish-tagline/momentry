@@ -2,6 +2,6 @@
 
 @interface RCT_EXTERN_MODULE(WidgetBridge, NSObject)
 
-RCT_EXTERN_METHOD(sendTextToWidget:(NSString *)text)
+RCT_EXTERN_METHOD(updateWidget:(NSString *)eventName daysLeft:(NSString *)daysLeft eventId:(NSString *)eventId)
 
 @end

@@ -1,4 +1,43 @@
-import { Category } from '../types';
+import { NativeModules, Platform } from 'react-native';
+import { Category, Event } from '../types';
+
+export const updateWidget = (event: Event | null) => {
+  try {
+    const eventName = event ? event.name : 'No active countdown';
+    const daysLeft = event ? calculateDaysLeft(event.date).toString() : '-';
+
+    if (Platform.OS === 'ios') {
+      console.log('Updating iOS Widget with:', {
+        eventName,
+        daysLeft,
+      });
+      if (
+        NativeModules.WidgetBridge &&
+        NativeModules.WidgetBridge.updateWidget
+      ) {
+        NativeModules.WidgetBridge.updateWidget(eventName, daysLeft);
+      } else {
+        console.warn(
+          'WidgetBridge.updateWidget is not available. Please rebuild the app.',
+        );
+      }
+    } else {
+      console.log('Updating Android Widget with:', {
+        eventName,
+        daysLeft,
+      });
+      if (NativeModules.QuoteWidget && NativeModules.QuoteWidget.updateWidget) {
+        NativeModules.QuoteWidget.updateWidget(eventName, daysLeft);
+      } else {
+        console.warn(
+          'QuoteWidget.updateWidget is not available. Please rebuild the app.',
+        );
+      }
+    }
+  } catch (error) {
+    console.error('Error updating widget:', error);
+  }
+};
 
 export const generateUUID = (): string => {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {

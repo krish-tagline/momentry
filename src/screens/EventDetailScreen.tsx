@@ -18,7 +18,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList, Event } from '../types';
 import { storage } from '../services/storage';
 import { CATEGORY_CONFIG } from '../constants';
-import { calculateDaysLeft, getSmartLine } from '../utils';
+import { calculateDaysLeft, getSmartLine, updateWidget } from '../utils';
 import { ThemedView, ThemedText, Card } from '../components/Themed';
 import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../theme';
 import { useTheme } from '../hooks/useTheme';
@@ -30,6 +30,7 @@ import {
   Calendar,
   Tag,
   FileText,
+  Monitor,
 } from 'phosphor-react-native';
 
 type EventDetailScreenNavigationProp = NativeStackNavigationProp<
@@ -44,11 +45,24 @@ export default function EventDetailScreen() {
   const { eventId } = route.params;
   const { colors } = useTheme();
   const [event, setEvent] = useState<Event | null>(null);
+  const [isWidgetEvent, setIsWidgetEvent] = useState(false);
 
   const loadEvent = useCallback(async () => {
     const events = await storage.getEvents();
-    const foundEvent = events.find(e => e.id === eventId);
+    const sortedEvents = [...events].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+    );
+    const foundEvent = sortedEvents.find(e => e.id === eventId);
     setEvent(foundEvent || null);
+
+    const widgetId = await storage.getWidgetEventId();
+    if (widgetId) {
+      setIsWidgetEvent(widgetId === eventId);
+    } else if (sortedEvents.length > 0) {
+      setIsWidgetEvent(sortedEvents[0].id === eventId);
+    } else {
+      setIsWidgetEvent(false);
+    }
   }, [eventId]);
 
   useFocusEffect(
@@ -56,6 +70,17 @@ export default function EventDetailScreen() {
       loadEvent();
     }, [loadEvent]),
   );
+
+  const handleSetWidget = async () => {
+    if (!event) return;
+    await storage.setWidgetEventId(event.id);
+    updateWidget(event);
+    setIsWidgetEvent(true);
+    Alert.alert(
+      'Widget Updated',
+      'This event will now be shown on your home screen widget.',
+    );
+  };
 
   const handleEdit = () => {
     if (!event) return;
@@ -222,6 +247,40 @@ export default function EventDetailScreen() {
                 </View>
               </>
             )}
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.detailItem}
+              onPress={handleSetWidget}
+              disabled={isWidgetEvent}
+            >
+              <View
+                style={[
+                  styles.detailIcon,
+                  isWidgetEvent && { backgroundColor: Colors.success + '20' },
+                ]}
+              >
+                <Monitor
+                  size={20}
+                  color={isWidgetEvent ? Colors.success : Colors.primary}
+                />
+              </View>
+              <View style={styles.detailContent}>
+                <ThemedText variant="secondary" type="caption">
+                  Home Screen Widget
+                </ThemedText>
+                <ThemedText
+                  variant="primary"
+                  type="bodySemi"
+                  style={isWidgetEvent ? { color: Colors.success } : undefined}
+                >
+                  {isWidgetEvent
+                    ? 'Currently Active on Widget'
+                    : 'Set as Active Widget'}
+                </ThemedText>
+              </View>
+            </TouchableOpacity>
           </Card>
         </ScrollView>
         <Button

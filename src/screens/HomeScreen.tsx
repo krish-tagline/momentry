@@ -18,6 +18,7 @@ import EventCard from '../components/EventCard';
 import { ThemedView, ThemedText } from '../components/Themed';
 import { Colors, Spacing, BorderRadius, Shadows } from '../theme';
 import { useTheme } from '../hooks/useTheme';
+import { updateWidget } from '../utils';
 import { CalendarBlank, Plus, Trash } from 'phosphor-react-native';
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<
@@ -43,6 +44,24 @@ export default function HomeScreen() {
     setEvents(sortedEvents);
     setIsLoading(false);
     setRefreshing(false);
+
+    // Widget Sync Logic
+    const widgetId = await storage.getWidgetEventId();
+    if (sortedEvents.length > 0) {
+      let widgetEvent = sortedEvents.find(e => e.id === widgetId);
+      if (widgetEvent) {
+        updateWidget(widgetEvent);
+      } else if (!widgetId) {
+        widgetEvent = sortedEvents[0];
+        await storage.setWidgetEventId(widgetEvent.id);
+        updateWidget(widgetEvent);
+      } else {
+        await storage.setWidgetEventId(null);
+        updateWidget(null);
+      }
+    } else {
+      updateWidget(null);
+    }
   }, []);
 
   const onRefresh = useCallback(() => {

@@ -12,7 +12,8 @@ class QuoteWidget : AppWidgetProvider() {
     companion object {
         private const val PREFS_NAME = "QuoteWidgetPrefs"
         private const val PREF_PREFIX_KEY = "quote_widget_"
-        private const val KEY_QUOTE = "quote"
+        private const val KEY_EVENT_NAME = "event_name"
+        private const val KEY_DAYS_LEFT = "days_left"
 
         fun updateAppWidget(
             context: Context,
@@ -20,12 +21,17 @@ class QuoteWidget : AppWidgetProvider() {
             appWidgetId: Int
         ) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            val quote = prefs.getString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_QUOTE, "Welcome to memontry!")
+            val eventName = prefs.getString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_EVENT_NAME, "No active countdown")
+            val daysLeft = prefs.getString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_DAYS_LEFT, "-")
 
             val views = RemoteViews(context.packageName, R.layout.widget_quote)
-            views.setTextViewText(R.id.widget_quote_text, quote)
+            views.setTextViewText(R.id.widget_event_name, eventName)
+            views.setTextViewText(R.id.widget_days_left, daysLeft)
 
-            val intent = Intent(context, MainActivity::class.java)
+            val intent = Intent(context, MainActivity::class.java).apply {
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            }
+            
             val pendingIntent = PendingIntent.getActivity(
                 context,
                 0,
@@ -37,7 +43,7 @@ class QuoteWidget : AppWidgetProvider() {
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
 
-        fun saveQuoteAndUpdateWidgets(context: Context, quote: String) {
+        fun saveEventAndUpdateWidgets(context: Context, eventName: String, daysLeft: String) {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
             val widgetManager = AppWidgetManager.getInstance(context)
@@ -45,7 +51,11 @@ class QuoteWidget : AppWidgetProvider() {
             val appWidgetIds = widgetManager.getAppWidgetIds(componentName)
 
             for (appWidgetId in appWidgetIds) {
-                prefs.edit().putString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_QUOTE, quote).apply()
+                prefs.edit().apply {
+                    putString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_EVENT_NAME, eventName)
+                    putString(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_DAYS_LEFT, daysLeft)
+                    apply()
+                }
                 updateAppWidget(context, widgetManager, appWidgetId)
             }
         }
@@ -65,7 +75,8 @@ class QuoteWidget : AppWidgetProvider() {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val editor = prefs.edit()
         for (appWidgetId in appWidgetIds) {
-            editor.remove(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_QUOTE)
+            editor.remove(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_EVENT_NAME)
+            editor.remove(PREF_PREFIX_KEY + appWidgetId + "_" + KEY_DAYS_LEFT)
         }
         editor.apply()
     }
