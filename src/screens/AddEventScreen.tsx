@@ -25,6 +25,10 @@ import { Category, AddStackParamList } from '../types';
 import { CATEGORY_CONFIG } from '../constants';
 import { storage } from '../services/storage';
 import { generateUUID } from '../utils';
+import {
+  cancelEventNotifications,
+  scheduleEventNotifications,
+} from '../services/notifications';
 import { ThemedView, ThemedText } from '../components/Themed';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
@@ -95,6 +99,7 @@ export default function AddEventScreen() {
     if (!validateForm()) return;
 
     const events = await storage.getEvents();
+    let savedEvent: any = null;
 
     if (!eventId) {
       const isPro = await storage.getIsPro();
@@ -120,7 +125,9 @@ export default function AddEventScreen() {
       if (events.length === 0) {
         await storage.setWidgetEventId(newEvent.id);
       }
+      savedEvent = newEvent;
     } else {
+      await cancelEventNotifications(eventId);
       const updatedEvent = {
         id: eventId,
         name: name.trim(),
@@ -130,6 +137,11 @@ export default function AddEventScreen() {
         createdAt: new Date().toISOString().split('T')[0], // Keep original or update? Usually keep original but storage.update might handle it
       };
       await storage.updateEvent(updatedEvent);
+      savedEvent = updatedEvent;
+    }
+
+    if (savedEvent) {
+      await scheduleEventNotifications(savedEvent);
     }
 
     navigation.setParams({ eventId: undefined });

@@ -19,6 +19,7 @@ import { HomeStackParamList, Event } from '../types';
 import { storage } from '../services/storage';
 import { CATEGORY_CONFIG } from '../constants';
 import { calculateDaysLeft, getSmartLine, updateWidget } from '../utils';
+import { cancelEventNotifications } from '../services/notifications';
 import { ThemedView, ThemedText, Card } from '../components/Themed';
 import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../theme';
 import { useTheme } from '../hooks/useTheme';
@@ -84,7 +85,6 @@ export default function EventDetailScreen() {
 
   const handleEdit = () => {
     if (!event) return;
-    // We can use the root navigation to jump to the Add tab and pass the eventId
     navigation.getParent()?.navigate('AddStack', {
       screen: 'AddEvent',
       params: { eventId: event.id },
@@ -98,6 +98,7 @@ export default function EventDetailScreen() {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
+          await cancelEventNotifications(eventId);
           await storage.deleteEvent(eventId);
           navigation.goBack();
         },
@@ -143,9 +144,6 @@ export default function EventDetailScreen() {
             Event Details
           </ThemedText>
           <View style={styles.headerRight}>
-            {/* <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
-                <Pencil size={24} color={Colors.primary} />
-              </TouchableOpacity> */}
             <TouchableOpacity
               onPress={handleDelete}
               style={styles.deleteButton}
@@ -229,25 +227,6 @@ export default function EventDetailScreen() {
               </View>
             </View>
 
-            {event.note && (
-              <>
-                <View style={styles.divider} />
-                <View style={styles.detailItem}>
-                  <View style={styles.detailIcon}>
-                    <FileText size={20} color={Colors.primary} />
-                  </View>
-                  <View style={styles.detailContent}>
-                    <ThemedText variant="secondary" type="caption">
-                      Note
-                    </ThemedText>
-                    <ThemedText variant="primary" type="body">
-                      {event.note}
-                    </ThemedText>
-                  </View>
-                </View>
-              </>
-            )}
-
             <View style={styles.divider} />
 
             <TouchableOpacity
@@ -281,6 +260,25 @@ export default function EventDetailScreen() {
                 </ThemedText>
               </View>
             </TouchableOpacity>
+
+            {event.note && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.detailItem}>
+                  <View style={styles.detailIcon}>
+                    <FileText size={20} color={Colors.primary} />
+                  </View>
+                  <View style={styles.detailContent}>
+                    <ThemedText variant="secondary" type="caption">
+                      Note
+                    </ThemedText>
+                    <ThemedText variant="primary" type="body">
+                      {event.note}
+                    </ThemedText>
+                  </View>
+                </View>
+              </>
+            )}
           </Card>
         </ScrollView>
         <Button

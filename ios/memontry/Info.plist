@@ -35,6 +35,10 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSNotificationCenterUsageDescription</key>
+	<string>We need your permission to send you notifications about your events</string>
+	<key>NSNotificationCenterAlwaysUsageDescription</key>
+	<string>We need your permission to send you notifications about your events even when the app is in the background</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

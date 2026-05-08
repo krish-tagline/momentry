@@ -51,7 +51,7 @@ react {
     // hermesFlags = ["-O", "-output-source-map"]
 
     /* Autolinking */
-    nodeExecutableAndArgs = ["/Users/mac/.nvm/versions/node/v24.12.0/bin/node"]
+    // nodeExecutableAndArgs = ["node"]
 
     autolinkLibrariesWithApp()
 }
