@@ -1,10 +1,34 @@
 import { NativeModules, Platform } from 'react-native';
 import { Category, Event } from '../types';
 
+export const generateUUID = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+export const calculateDaysLeft = (dateString: string): number => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const eventDate = new Date(dateString);
+  eventDate.setHours(0, 0, 0, 0);
+  const diffTime = eventDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+};
+
+export const calculateDisplayDaysLeft = (dateString: string): number => {
+  return Math.max(0, calculateDaysLeft(dateString));
+};
+
 export const updateWidget = (event: Event | null) => {
   try {
     const eventName = event ? event.name : 'No active countdown';
-    const daysLeft = event ? calculateDaysLeft(event.date).toString() : '-';
+    const daysLeft = event
+      ? calculateDisplayDaysLeft(event.date).toString()
+      : '-';
 
     if (Platform.OS === 'ios') {
       console.log('Updating iOS Widget with:', {
@@ -37,24 +61,6 @@ export const updateWidget = (event: Event | null) => {
   } catch (error) {
     console.error('Error updating widget:', error);
   }
-};
-
-export const generateUUID = (): string => {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-};
-
-export const calculateDaysLeft = (dateString: string): number => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const eventDate = new Date(dateString);
-  eventDate.setHours(0, 0, 0, 0);
-  const diffTime = eventDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays;
 };
 
 export const formatRemainingTime = (

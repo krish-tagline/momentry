@@ -3,7 +3,6 @@ import {
   View,
   FlatList,
   TouchableOpacity,
-  SafeAreaView,
   StyleSheet,
   Alert,
   RefreshControl,
@@ -15,9 +14,12 @@ import { HomeStackParamList } from '../types';
 import { storage } from '../services/storage';
 import { Event } from '../types';
 import EventCard from '../components/EventCard';
-import { ThemedView, ThemedText } from '../components/Themed';
+import {
+  ThemedView,
+  ThemedText,
+  ThemedSafeAreaView,
+} from '../components/Themed';
 import { Colors, Spacing, BorderRadius, Shadows } from '../theme';
-import { useTheme } from '../hooks/useTheme';
 import { updateWidget } from '../utils';
 import { CalendarBlank, Plus, Trash } from 'phosphor-react-native';
 
@@ -33,7 +35,6 @@ export default function HomeScreen() {
   const [selectedEventIds, setSelectedEventIds] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const { colors, isDark } = useTheme();
 
   const loadEvents = useCallback(async (showLoader = false) => {
     if (showLoader) setIsLoading(true);
@@ -140,7 +141,7 @@ export default function HomeScreen() {
     );
   };
 
-  const renderItem = ({ item, index }: { item: Event; index: number }) => (
+  const renderItem = ({ item }: { item: Event }) => (
     <EventCard
       event={item}
       isSelected={selectedEventIds.includes(item.id)}
@@ -158,9 +159,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.surface }]}
-    >
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.content}>
         <View style={styles.header}>
           <View style={{ gap: 5 }}>
@@ -244,7 +243,7 @@ export default function HomeScreen() {
           />
         )}
       </ThemedView>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -254,7 +253,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: Colors.light.surface,
   },
   loadingContainer: {
     flex: 1,

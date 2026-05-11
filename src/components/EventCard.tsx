@@ -1,8 +1,19 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  useColorScheme,
+} from 'react-native';
 import { Event } from '../types';
 import { CATEGORY_CONFIG } from '../constants';
-import { calculateDaysLeft, getSmartLine, formatRemainingTime } from '../utils';
+import {
+  calculateDaysLeft,
+  getSmartLine,
+  formatRemainingTime,
+  calculateDisplayDaysLeft,
+} from '../utils';
 import { BorderRadius, Spacing, Typography, Shadows, Colors } from '../theme';
 import { Check } from 'phosphor-react-native';
 
@@ -21,15 +32,20 @@ export default function EventCard({
   onPress,
   onLongPress,
 }: EventCardProps) {
+  const isDark = useColorScheme() === 'dark';
+  const colors = isDark ? Colors.dark : Colors.light;
   const config = CATEGORY_CONFIG[event.category];
   const daysLeft = calculateDaysLeft(event.date);
+  const displayDaysLeft = calculateDisplayDaysLeft(event.date);
   const smartLine = getSmartLine(event.category, daysLeft);
-  const { value: timeValue, label: timeLabel } = formatRemainingTime(daysLeft);
+  const { value: timeValue, label: timeLabel } =
+    formatRemainingTime(displayDaysLeft);
 
   return (
     <TouchableOpacity
       style={[
         styles.card,
+        { borderColor: colors.borderLight },
         isSelected && { borderWidth: 2, borderColor: config.color },
         Shadows.medium,
       ]}
@@ -40,7 +56,11 @@ export default function EventCard({
       <View
         style={[
           styles.backgroundGradient,
-          { backgroundColor: config.lightColor },
+          {
+            backgroundColor: isDark
+              ? colors.surfaceElevated
+              : config.lightColor,
+          },
         ]}
       >
         <View style={styles.leftSection}>
@@ -49,11 +69,9 @@ export default function EventCard({
               style={[
                 styles.iconContainer,
                 {
-                  backgroundColor: isSelected
-                    ? config.color
-                    : Colors.light.border,
+                  backgroundColor: isSelected ? config.color : colors.border,
                   borderWidth: 1,
-                  borderColor: isSelected ? config.color : Colors.light.border,
+                  borderColor: isSelected ? config.color : colors.border,
                 },
               ]}
             >
@@ -68,13 +86,18 @@ export default function EventCard({
           )}
           <View style={styles.textContainer}>
             <Text
-              style={[styles.eventName, { color: config.color }]}
+              style={[
+                styles.eventName,
+                { color: isDark ? colors.textPrimary : config.color },
+              ]}
               numberOfLines={2}
               ellipsizeMode="tail"
             >
               {event.name}
             </Text>
-            <Text style={styles.smartLine}>{smartLine}</Text>
+            <Text style={[styles.smartLine, { color: colors.textSecondary }]}>
+              {smartLine}
+            </Text>
           </View>
         </View>
         <View style={[styles.daysContainer, { backgroundColor: config.color }]}>
@@ -93,7 +116,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: Colors.light.borderLight,
   },
   backgroundGradient: {
     paddingVertical: Spacing.lg,
@@ -129,7 +151,6 @@ const styles = StyleSheet.create({
   },
   smartLine: {
     fontSize: Typography.caption.fontSize,
-    color: '#4B5563',
     lineHeight: 18,
     fontWeight: '500',
   },

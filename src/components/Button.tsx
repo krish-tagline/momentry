@@ -45,7 +45,7 @@ export function Button({
       case 'secondary':
         return {
           ...baseStyle,
-          backgroundColor: disabled ? colors.border : Colors.primaryLight,
+          backgroundColor: disabled ? colors.border : isDark ? colors.surfaceElevated : Colors.primaryLight,
         };
       case 'outline':
         return {

@@ -17,8 +17,8 @@ import { Colors, BorderRadius, Spacing } from '../theme';
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function RootTabNavigator() {
-  const isDarkMode = useColorScheme() === 'dark';
-  const colors = isDarkMode ? Colors.dark : Colors.light;
+  const isDark = useColorScheme() === 'dark';
+  const colors = isDark ? Colors.dark : Colors.light;
 
   return (
     <Tab.Navigator
@@ -27,6 +27,7 @@ export default function RootTabNavigator() {
         headerShown: false,
         tabBarActiveTintColor: Colors.primary,
         tabBarInactiveTintColor: colors.textTertiary,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
@@ -64,13 +65,20 @@ export default function RootTabNavigator() {
         component={HomeStackNavigator}
         options={{
           title: 'Home',
+          tabBarButton: props => (
+            <Pressable {...props} android_ripple={{ color: 'transparent' }} />
+          ),
           tabBarIcon: ({ color, focused }) => {
             const IconComponent = focused ? House : HouseSimple;
             return (
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: Colors.primaryLight },
+                  focused && {
+                    backgroundColor: isDark
+                      ? colors.surfaceElevated
+                      : Colors.primaryLight,
+                  },
                 ]}
               >
                 <IconComponent color={color} size={20} />
@@ -84,6 +92,9 @@ export default function RootTabNavigator() {
         component={AddStackNavigator}
         options={{
           title: 'Add',
+          tabBarButton: props => (
+            <Pressable {...props} android_ripple={{ color: 'transparent' }} />
+          ),
           tabBarIcon: ({ color, focused }) => (
             <View
               style={[
@@ -101,13 +112,20 @@ export default function RootTabNavigator() {
         component={SettingsScreen}
         options={{
           title: 'Settings',
+          tabBarButton: props => (
+            <Pressable {...props} android_ripple={{ color: 'transparent' }} />
+          ),
           tabBarIcon: ({ color, focused }) => {
             const IconComponent = focused ? Gear : GearSix;
             return (
               <View
                 style={[
                   styles.iconContainer,
-                  focused && { backgroundColor: Colors.primaryLight },
+                  focused && {
+                    backgroundColor: isDark
+                      ? colors.surfaceElevated
+                      : Colors.primaryLight,
+                  },
                 ]}
               >
                 <IconComponent color={color} size={20} />

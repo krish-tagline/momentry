@@ -3,7 +3,6 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StyleSheet,
   Alert,
   Text,
@@ -18,16 +17,25 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { HomeStackParamList, Event } from '../types';
 import { storage } from '../services/storage';
 import { CATEGORY_CONFIG } from '../constants';
-import { calculateDaysLeft, getSmartLine, updateWidget } from '../utils';
+import {
+  calculateDaysLeft,
+  getSmartLine,
+  updateWidget,
+  calculateDisplayDaysLeft,
+} from '../utils';
 import { cancelEventNotifications } from '../services/notifications';
-import { ThemedView, ThemedText, Card } from '../components/Themed';
+import {
+  ThemedView,
+  ThemedText,
+  Card,
+  ThemedSafeAreaView,
+} from '../components/Themed';
 import { Colors, Spacing, BorderRadius, Shadows, Typography } from '../theme';
 import { useTheme } from '../hooks/useTheme';
 import { Button } from '../components/Button';
 import {
   ArrowLeft,
   Trash,
-  Pencil,
   Calendar,
   Tag,
   FileText,
@@ -44,7 +52,7 @@ export default function EventDetailScreen() {
   const navigation = useNavigation<EventDetailScreenNavigationProp>();
   const route = useRoute<EventDetailScreenRouteProp>();
   const { eventId } = route.params;
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [event, setEvent] = useState<Event | null>(null);
   const [isWidgetEvent, setIsWidgetEvent] = useState(false);
 
@@ -108,7 +116,7 @@ export default function EventDetailScreen() {
 
   if (!event) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ThemedSafeAreaView style={styles.container}>
         <ThemedView style={styles.content}>
           <View style={styles.header}>
             <TouchableOpacity
@@ -120,18 +128,17 @@ export default function EventDetailScreen() {
             <View style={{ width: 40 }} />
           </View>
         </ThemedView>
-      </SafeAreaView>
+      </ThemedSafeAreaView>
     );
   }
 
   const config = CATEGORY_CONFIG[event.category];
   const daysLeft = calculateDaysLeft(event.date);
+  const displayDaysLeft = calculateDisplayDaysLeft(event.date);
   const smartLine = getSmartLine(event.category, daysLeft);
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: Colors.light.surface }]}
-    >
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.content}>
         <View style={styles.header}>
           <TouchableOpacity
@@ -159,7 +166,12 @@ export default function EventDetailScreen() {
           <View
             style={[
               styles.eventHeader,
-              { backgroundColor: config.lightColor, ...Shadows.light },
+              {
+                backgroundColor: isDark
+                  ? colors.surfaceElevated
+                  : config.lightColor,
+                ...Shadows.light,
+              },
             ]}
           >
             <View
@@ -169,7 +181,10 @@ export default function EventDetailScreen() {
             </View>
             <View style={styles.eventInfo}>
               <Text
-                style={[styles.eventName, { color: config.color }]}
+                style={[
+                  styles.eventName,
+                  { color: isDark ? colors.textPrimary : config.color },
+                ]}
                 numberOfLines={2}
                 ellipsizeMode="tail"
               >
@@ -181,18 +196,28 @@ export default function EventDetailScreen() {
             </View>
           </View>
 
-          <Card style={styles.daysCard}>
+          <Card
+            style={[
+              styles.daysCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.daysContainer}>
               <ThemedText variant="primary" type="caption">
-                {daysLeft === 1 ? 'Day Left' : 'Days Left'}
+                {displayDaysLeft === 1 ? 'Day Left' : 'Days Left'}
               </ThemedText>
               <Text style={[styles.daysNumber, { color: config.color }]}>
-                {daysLeft}
+                {displayDaysLeft}
               </Text>
             </View>
           </Card>
 
-          <Card style={styles.detailCard}>
+          <Card
+            style={[
+              styles.detailCard,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.detailItem}>
               <View style={styles.detailIcon}>
                 <Calendar size={20} color={Colors.primary} />
@@ -211,7 +236,9 @@ export default function EventDetailScreen() {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
 
             <View style={styles.detailItem}>
               <View style={styles.detailIcon}>
@@ -227,7 +254,9 @@ export default function EventDetailScreen() {
               </View>
             </View>
 
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
 
             <TouchableOpacity
               style={styles.detailItem}
@@ -263,7 +292,9 @@ export default function EventDetailScreen() {
 
             {event.note && (
               <>
-                <View style={styles.divider} />
+                <View
+                  style={[styles.divider, { backgroundColor: colors.border }]}
+                />
                 <View style={styles.detailItem}>
                   <View style={styles.detailIcon}>
                     <FileText size={20} color={Colors.primary} />
@@ -289,7 +320,7 @@ export default function EventDetailScreen() {
           style={[styles.saveButton, Shadows.heavy]}
         />
       </ThemedView>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -299,7 +330,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: Colors.light.surface,
   },
   scrollContent: {
     padding: 18,
@@ -408,7 +438,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     borderRadius: BorderRadius.lg,
-    height: 56,
+    // height: 56,
     position: 'absolute',
     bottom: 20,
     width: '90%',

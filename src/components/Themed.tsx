@@ -5,8 +5,8 @@ import {
   StyleSheet,
   ViewStyle,
   TextStyle,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Typography, BorderRadius, Spacing, Shadows } from '../theme';
 import { useTheme } from '../hooks/useTheme';
 

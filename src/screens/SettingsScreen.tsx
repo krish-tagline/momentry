@@ -3,15 +3,19 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StyleSheet,
   Alert,
-  useColorScheme,
 } from 'react-native';
-import { ThemedView, ThemedText, Card } from '../components/Themed';
+import {
+  ThemedView,
+  ThemedText,
+  Card,
+  ThemedSafeAreaView,
+} from '../components/Themed';
 import { Colors, Spacing, BorderRadius } from '../theme';
 import * as Phosphor from 'phosphor-react-native';
 import { storage } from '../services/storage';
+import { useTheme } from '../hooks/useTheme';
 
 interface SettingsItemProps {
   icon: keyof typeof Phosphor;
@@ -30,7 +34,8 @@ function SettingsItem({
   onPress,
   rightComponent,
 }: SettingsItemProps) {
-  const IconComponent = Phosphor[icon];
+  const IconComponent = Phosphor[icon] as any;
+  const { colors } = useTheme();
 
   return (
     <TouchableOpacity
@@ -58,7 +63,7 @@ function SettingsItem({
       </View>
       {rightComponent ||
         (onPress && (
-          <Phosphor.CaretRight size={20} color={Colors.light.textTertiary} />
+          <Phosphor.CaretRight size={20} color={colors.textTertiary} />
         ))}
     </TouchableOpacity>
   );
@@ -66,8 +71,7 @@ function SettingsItem({
 
 export default function SettingsScreen() {
   const [isPro, setIsPro] = useState(false);
-  const isDark = useColorScheme() === 'dark';
-  const colors = isDark ? Colors.dark : Colors.light;
+  const { colors } = useTheme();
 
   const loadProStatus = useCallback(async () => {
     const proStatus = await storage.getIsPro();
@@ -109,9 +113,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.content}>
         <ScrollView
           contentContainerStyle={styles.scrollContent}
@@ -123,7 +125,12 @@ export default function SettingsScreen() {
             </ThemedText>
           </View>
 
-          <Card style={[styles.card]}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.proBanner}>
               <View style={styles.proIcon}>
                 <Phosphor.Star size={28} color="#ffc400ff" />
@@ -152,7 +159,12 @@ export default function SettingsScreen() {
             </View>
           </Card>
 
-          <Card style={styles.card}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.sectionHeader}>
               <ThemedText variant="secondary" type="captionSemi">
                 General
@@ -164,7 +176,9 @@ export default function SettingsScreen() {
               title="Notifications"
               subtitle="Stay updated with your countdowns"
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingsItem
               icon="Palette"
               iconColor={Colors.primary}
@@ -173,7 +187,12 @@ export default function SettingsScreen() {
             />
           </Card>
 
-          <Card style={styles.card}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.sectionHeader}>
               <ThemedText variant="secondary" type="captionSemi">
                 Support
@@ -185,13 +204,17 @@ export default function SettingsScreen() {
               title="Rate App"
               onPress={handleRateApp}
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingsItem
               icon="Question"
               iconColor={Colors.primary}
               title="Help & Feedback"
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingsItem
               icon="EnvelopeSimple"
               iconColor={Colors.primary}
@@ -199,19 +222,26 @@ export default function SettingsScreen() {
             />
           </Card>
 
-          <Card style={styles.card}>
+          <Card
+            style={[
+              styles.card,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+            ]}
+          >
             <View style={styles.sectionHeader}>
               <ThemedText variant="secondary" type="captionSemi">
                 Legal
               </ThemedText>
             </View>
             <SettingsItem
-              icon="Shield"
+              icon="ShieldCheck"
               iconColor={Colors.primary}
               title="Privacy Policy"
               onPress={handlePrivacyPolicy}
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingsItem
               icon="FileText"
               iconColor={Colors.primary}
@@ -220,32 +250,26 @@ export default function SettingsScreen() {
             />
           </Card>
 
-          <Card style={styles.card}>
-            <View style={styles.sectionHeader}>
-              <ThemedText variant="secondary" type="captionSemi">
-                Data
-              </ThemedText>
-            </View>
-            <SettingsItem
-              icon="Trash"
-              iconColor={Colors.error}
-              title="Clear All Data"
-              subtitle="Delete all your events"
-              onPress={handleClearAllData}
-            />
-          </Card>
-
-          <View style={styles.footer}>
-            <ThemedText variant="tertiary" type="caption">
-              Memontry v1.0.0
+          <TouchableOpacity
+            style={styles.dangerButton}
+            onPress={handleClearAllData}
+          >
+            <ThemedText style={{ color: Colors.error }} type="bodySemi">
+              Clear All Data
             </ThemedText>
-            <ThemedText variant="tertiary" type="small">
+          </TouchableOpacity>
+
+          <View style={styles.versionContainer}>
+            <ThemedText variant="secondary" type="small">
+              Version 1.0.0
+            </ThemedText>
+            <ThemedText variant="secondary" type="small">
               Made with ❤️
             </ThemedText>
           </View>
         </ScrollView>
       </ThemedView>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -329,9 +353,16 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.border,
     marginLeft: Spacing.lg + Spacing.md + 40,
   },
-  footer: {
+  dangerButton: {
+    padding: Spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Spacing.sm,
+  },
+  versionContainer: {
     alignItems: 'center',
     marginTop: Spacing.xl,
-    gap: Spacing.md,
+    gap: 4,
+    paddingBottom: Spacing.xl,
   },
 });

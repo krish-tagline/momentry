@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,10 +6,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  SafeAreaView,
   StyleSheet,
   Text,
-  useColorScheme,
 } from 'react-native';
 import {
   useNavigation,
@@ -19,7 +17,7 @@ import {
   useFocusEffect,
 } from '@react-navigation/native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import { ArrowLeft, Calendar, CaretRight } from 'phosphor-react-native';
+import { Calendar, CaretRight } from 'phosphor-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Category, AddStackParamList } from '../types';
 import { CATEGORY_CONFIG } from '../constants';
@@ -29,7 +27,11 @@ import {
   cancelEventNotifications,
   scheduleEventNotifications,
 } from '../services/notifications';
-import { ThemedView, ThemedText } from '../components/Themed';
+import {
+  ThemedView,
+  ThemedText,
+  ThemedSafeAreaView,
+} from '../components/Themed';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { Colors, Spacing, BorderRadius, Shadows } from '../theme';
@@ -52,27 +54,7 @@ export default function AddEventScreen() {
   const [nameError, setNameError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      if (eventId) {
-        loadEventDetails();
-      } else {
-        resetForm();
-      }
-    }, [eventId]),
-  );
-
-  const resetForm = () => {
-    setName('');
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setDate(tomorrow);
-    setCategory('general');
-    setNote('');
-    setNameError('');
-  };
-
-  const loadEventDetails = async () => {
+  const loadEventDetails = useCallback(async () => {
     setIsLoading(true);
     const events = await storage.getEvents();
     const event = events.find(e => e.id === eventId);
@@ -84,7 +66,27 @@ export default function AddEventScreen() {
       setNameError('');
     }
     setIsLoading(false);
-  };
+  }, [eventId]);
+
+  const resetForm = useCallback(() => {
+    setName('');
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    setDate(tomorrow);
+    setCategory('general');
+    setNote('');
+    setNameError('');
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      if (eventId) {
+        loadEventDetails();
+      } else {
+        resetForm();
+      }
+    }, [eventId, loadEventDetails, resetForm]),
+  );
 
   const validateForm = () => {
     if (!name.trim()) {
@@ -162,9 +164,7 @@ export default function AddEventScreen() {
   };
 
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.surface }]}
-    >
+    <ThemedSafeAreaView style={styles.container}>
       <ThemedView style={styles.content}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
@@ -175,18 +175,6 @@ export default function AddEventScreen() {
               {eventId ? 'Edit Event' : 'Add Event'}
             </ThemedText>
           </View>
-          {/* <View style={styles.header}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={styles.backButton}
-            >
-              <ArrowLeft size={24} color={Colors.primary} />
-            </TouchableOpacity>
-            <ThemedText variant="primary" type="h3">
-              Add Event
-            </ThemedText>
-            <View style={{ width: 40 }} />
-          </View> */}
 
           <ScrollView
             contentContainerStyle={styles.scrollContent}
@@ -198,43 +186,44 @@ export default function AddEventScreen() {
               value={name}
               onChangeText={text => {
                 setName(text);
-                if (text.trim()) setNameError('');
+                if (nameError) setNameError('');
               }}
-              leftIcon="PencilSimple"
               error={nameError}
-              containerStyle={{ marginBottom: Spacing.xl }}
+              leftIcon="PencilSimple"
             />
 
             <View style={styles.inputGroup}>
               <ThemedText
-                variant="primary"
+                variant="secondary"
                 type="captionSemi"
                 style={styles.label}
               >
                 Event Date
               </ThemedText>
               <TouchableOpacity
-                style={[styles.dateButton, Shadows.light]}
+                style={[
+                  styles.dateButton,
+                  Shadows.light,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.border,
+                  },
+                ]}
                 onPress={() => setDatePickerVisible(true)}
-                activeOpacity={0.7}
               >
                 <View style={styles.dateContent}>
-                  <Calendar
-                    size={20}
-                    color={Colors.primary}
-                    style={styles.calendarIcon}
-                  />
-                  <ThemedText variant="primary" type="bodySemi">
+                  <Calendar size={20} color={Colors.primary} />
+                  <ThemedText style={{ marginLeft: Spacing.sm }}>
                     {formatDate(date)}
                   </ThemedText>
                 </View>
-                <CaretRight size={20} color={Colors.primary} />
+                <CaretRight size={20} color={colors.textTertiary} />
               </TouchableOpacity>
             </View>
 
-            <View style={[styles.inputGroup, { marginTop: 15 }]}>
+            <View style={styles.inputGroup}>
               <ThemedText
-                variant="primary"
+                variant="secondary"
                 type="captionSemi"
                 style={styles.label}
               >
@@ -244,29 +233,42 @@ export default function AddEventScreen() {
                 {(Object.keys(CATEGORY_CONFIG) as Category[]).map(cat => {
                   const config = CATEGORY_CONFIG[cat];
                   const isSelected = category === cat;
+                  const cardStyle = {
+                    backgroundColor: isDark
+                      ? isSelected
+                        ? Colors.primaryLight
+                        : colors.surface
+                      : config.lightColor,
+
+                    borderColor: isDark
+                      ? isSelected
+                        ? Colors.primary
+                        : colors.border
+                      : isSelected
+                      ? config.color
+                      : colors.border,
+
+                    borderWidth: isSelected ? 2 : 1,
+                  };
                   return (
                     <TouchableOpacity
                       key={cat}
                       style={[
                         styles.categoryCard,
-                        {
-                          backgroundColor: config.lightColor,
-                          borderColor: isSelected
-                            ? config.color
-                            : colors.border,
-                          borderWidth: isSelected ? 2 : 1,
-                        },
-                        isSelected ? Shadows.medium : null,
+                        cardStyle,
+                        !isDark && isSelected ? Shadows.medium : null,
                       ]}
                       onPress={() => setCategory(cat)}
                       activeOpacity={0.7}
                     >
                       <Text style={styles.categoryIcon}>{config.icon}</Text>
                       <ThemedText
-                        variant="primary"
+                        variant={isSelected ? 'primary' : 'secondary'}
                         type="captionSemi"
                         style={{
-                          color: config.color,
+                          color: isSelected
+                            ? Colors.primary
+                            : colors.textSecondary,
                         }}
                       >
                         {config.name}
@@ -279,41 +281,39 @@ export default function AddEventScreen() {
 
             <Input
               label="Note (Optional)"
-              placeholder="Add a personal note..."
+              placeholder="Add some details..."
               value={note}
               onChangeText={setNote}
               multiline
-              style={styles.textArea}
-              containerStyle={{ marginTop: 20 }}
+              leftIcon="Note"
+              style={{ marginLeft: Spacing.sm }}
+              containerStyle={{}}
             />
-          </ScrollView>
 
-          {/* <View style={styles.footer}> */}
+            <View style={{ height: Spacing.sm }} />
+          </ScrollView>
           <Button
             title={eventId ? 'Update Event' : 'Save Event'}
             onPress={handleSave}
-            variant="primary"
-            size="md"
             loading={isLoading}
-            disabled={isLoading}
             style={[styles.saveButton, Shadows.heavy]}
           />
-          {/* </View> */}
-
-          <DateTimePickerModal
-            isVisible={isDatePickerVisible}
-            mode="date"
-            date={date}
-            minimumDate={tomorrow}
-            onConfirm={selectedDate => {
-              setDate(selectedDate);
-              setDatePickerVisible(false);
-            }}
-            onCancel={() => setDatePickerVisible(false)}
-          />
+          {/* <View style={{ height: Spacing.sm }} /> */}
         </KeyboardAvoidingView>
+
+        <DateTimePickerModal
+          isVisible={isDatePickerVisible}
+          mode="date"
+          onConfirm={selectedDate => {
+            setDate(selectedDate);
+            setDatePickerVisible(false);
+          }}
+          onCancel={() => setDatePickerVisible(false)}
+          date={date}
+          minimumDate={new Date()}
+        />
       </ThemedView>
-    </SafeAreaView>
+    </ThemedSafeAreaView>
   );
 }
 
@@ -323,7 +323,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    backgroundColor: Colors.light.surface,
   },
   keyboardAvoid: {
     flex: 1,
@@ -400,7 +399,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     borderRadius: BorderRadius.lg,
-    height: 56,
+    // height: 56,
     position: 'absolute',
     bottom: 20,
     width: '90%',
